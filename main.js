@@ -1,23 +1,23 @@
 // ==UserScript==
-// @name         Blooket Ultra Auto-Solver Pro (Rayfield UI)
+// @name         Blooket Ultra Auto-Solver Pro v2.0 (Rayfield UI)
 // @namespace    https://blooket.com
-// @version      2026.1.0
-// @description  Next-Gen Blooket Auto Solver with Rayfield Glass UI, Humanized Delay & Answer Highlight
+// @version      2026.2.0
+// @description  Next-Gen Blooket Auto Solver with Enhanced Highlight & React Fiber Engine
 // @author       Rice
 // @match        https://*.blooket.com/*
 // @grant        none
 // ==/UserScript==
 
 javascript:(function () {
-    if (window.__blooket_solver_instance__) {
-        const instance = document.getElementById('rf-blooket-ui');
-        if (instance) instance.style.display = instance.style.display === 'none' ? 'block' : 'none';
+    if (window.__blooket_solver_v2__) {
+        const uiElem = document.getElementById('rf-blooket-ui');
+        if (uiElem) uiElem.style.display = uiElem.style.display === 'none' ? 'block' : 'none';
         return;
     }
 
-    window.__blooket_solver_instance__ = true;
+    window.__blooket_solver_v2__ = true;
 
-    // --- State Management ---
+    // --- Config State ---
     const config = {
         enabled: true,
         highlightOnly: false,
@@ -27,9 +27,9 @@ javascript:(function () {
         intervalId: null
     };
 
-    // --- Dynamic CSS Injection ---
+    // --- Dynamic CSS ---
     const style = document.createElement('style');
-    style.id = 'rf-blooket-style';
+    style.id = 'rf-blooket-style-v2';
     style.innerHTML = `
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Pretendard:wght@400;600;700&display=swap');
 
@@ -37,21 +37,20 @@ javascript:(function () {
             position: fixed;
             top: 60px;
             left: 60px;
-            width: 320px;
-            background: rgba(15, 15, 23, 0.92);
-            backdrop-filter: blur(12px);
+            width: 330px;
+            background: rgba(13, 13, 20, 0.94);
+            backdrop-filter: blur(16px);
             color: #e2e8f0;
             font-family: 'Pretendard', -apple-system, sans-serif;
             border-radius: 14px;
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 229, 255, 0.2);
-            z-index: 9999999;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 229, 255, 0.3);
+            z-index: 99999999;
             user-select: none;
             overflow: hidden;
-            transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .rf-header {
-            background: linear-gradient(90deg, #141422 0%, #1a1a2e 100%);
+            background: linear-gradient(90deg, #10101c 0%, #18182a 100%);
             padding: 12px 16px;
             display: flex;
             justify-content: space-between;
@@ -68,8 +67,7 @@ javascript:(function () {
             display: flex;
             align-items: center;
             gap: 8px;
-            letter-spacing: 0.5px;
-            text-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+            text-shadow: 0 0 12px rgba(0, 229, 255, 0.5);
         }
 
         .rf-controls {
@@ -78,7 +76,7 @@ javascript:(function () {
         }
 
         .rf-btn {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.06);
             color: #94a3b8;
             border: 1px solid rgba(255, 255, 255, 0.1);
             width: 24px;
@@ -95,14 +93,14 @@ javascript:(function () {
 
         .rf-btn:hover {
             background: #00e5ff;
-            color: #0f0f17;
-            box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+            color: #0d0d14;
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
         }
 
         .rf-btn-close:hover {
             background: #ff4757 !important;
             color: #fff !important;
-            box-shadow: 0 0 10px rgba(255, 71, 87, 0.5) !important;
+            box-shadow: 0 0 12px rgba(255, 71, 87, 0.6) !important;
         }
 
         .rf-body {
@@ -119,12 +117,12 @@ javascript:(function () {
             background: rgba(255, 255, 255, 0.03);
             padding: 10px 14px;
             border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             transition: border-color 0.2s ease;
         }
 
         .rf-row:hover {
-            border-color: rgba(0, 229, 255, 0.3);
+            border-color: rgba(0, 229, 255, 0.4);
         }
 
         .rf-label {
@@ -144,17 +142,17 @@ javascript:(function () {
             position: relative;
             width: 46px;
             height: 24px;
-            background: #1e1e2d;
+            background: #1a1a28;
             border-radius: 12px;
             cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: all 0.3s ease;
         }
 
         .rf-switch.active {
             background: #00e5ff;
             border-color: #00e5ff;
-            box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+            box-shadow: 0 0 14px rgba(0, 229, 255, 0.5);
         }
 
         .rf-switch-knob {
@@ -165,19 +163,19 @@ javascript:(function () {
             height: 18px;
             background: #fff;
             border-radius: 50%;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
         }
 
         .rf-switch.active .rf-switch-knob {
             left: 24px;
-            background: #0f0f17;
+            background: #0d0d14;
         }
 
         .rf-input-num {
             width: 65px;
-            background: #181824;
+            background: #141420;
             color: #00e5ff;
-            border: 1px solid rgba(0, 229, 255, 0.3);
+            border: 1px solid rgba(0, 229, 255, 0.4);
             border-radius: 6px;
             padding: 5px 8px;
             text-align: center;
@@ -199,46 +197,46 @@ javascript:(function () {
             position: fixed;
             bottom: 30px;
             left: 30px;
-            width: 50px;
-            height: 50px;
-            background: #0f0f17;
+            width: 52px;
+            height: 52px;
+            background: #0d0d14;
             border: 2px solid #00e5ff;
             border-radius: 50%;
             display: none;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
-            z-index: 9999999;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.6);
+            z-index: 99999999;
+            transition: transform 0.2s ease;
         }
 
         #rf-blooket-fab:hover {
             transform: scale(1.1);
-            box-shadow: 0 0 30px rgba(0, 229, 255, 0.8);
         }
 
-        .rf-correct-answer {
-            outline: 4px solid #10b981 !important;
-            box-shadow: 0 0 20px #10b981 !important;
-            animation: pulse-correct 1s infinite alternate;
-        }
-
-        @keyframes pulse-correct {
-            from { transform: scale(1); }
-            to { transform: scale(1.02); }
+        #rf-answer-hint {
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            color: #10b981;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 14px;
         }
     `;
     document.head.appendChild(style);
 
-    // --- UI Structure ---
+    // --- UI Construct ---
     const ui = document.createElement('div');
     ui.id = 'rf-blooket-ui';
     ui.innerHTML = `
         <div class="rf-header" id="rf-drag-bar">
             <div class="rf-title">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                RAYFIELD // RICE SOLVER
+                RAYFIELD // RICE SOLVER v2.0
             </div>
             <div class="rf-controls">
                 <button class="rf-btn" id="rf-min-btn" title="최소화">-</button>
@@ -249,7 +247,7 @@ javascript:(function () {
             <div class="rf-row">
                 <div>
                     <span class="rf-label">오토 솔버 (Auto Solve)</span>
-                    <span class="rf-sublabel">정답 자동으로 클릭/제출</span>
+                    <span class="rf-sublabel">정답 자동 클릭 / 제출</span>
                 </div>
                 <div class="rf-switch active" id="rf-auto-sw">
                     <div class="rf-switch-knob"></div>
@@ -257,8 +255,8 @@ javascript:(function () {
             </div>
             <div class="rf-row">
                 <div>
-                    <span class="rf-label">정답만 표시 (Highlight)</span>
-                    <span class="rf-sublabel">클릭 대신 정답 테두리 강조</span>
+                    <span class="rf-label">정답 강조 (Highlight Only)</span>
+                    <span class="rf-sublabel">클릭 대신 강렬한 초록 테두리</span>
                 </div>
                 <div class="rf-switch" id="rf-hl-sw">
                     <div class="rf-switch-knob"></div>
@@ -267,7 +265,7 @@ javascript:(function () {
             <div class="rf-row">
                 <div>
                     <span class="rf-label">기본 딜레이 (ms)</span>
-                    <span class="rf-sublabel">응답 간격 (랜덤 오차 포함)</span>
+                    <span class="rf-sublabel">응답 제출 간격</span>
                 </div>
                 <input type="number" class="rf-input-num" id="rf-delay-input" value="${config.baseDelay}" min="0" step="50">
             </div>
@@ -281,7 +279,7 @@ javascript:(function () {
     fab.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`;
     document.body.appendChild(fab);
 
-    // --- Drag System ---
+    // --- Drag Logic ---
     const dragBar = document.getElementById('rf-drag-bar');
     let isDragging = false, dragX = 0, dragY = 0;
 
@@ -299,7 +297,7 @@ javascript:(function () {
 
     document.addEventListener('mouseup', () => isDragging = false);
 
-    // --- Toggle & UI Handlers ---
+    // --- Handlers ---
     const autoSw = document.getElementById('rf-auto-sw');
     const hlSw = document.getElementById('rf-hl-sw');
     const delayInput = document.getElementById('rf-delay-input');
@@ -312,6 +310,7 @@ javascript:(function () {
     hlSw.addEventListener('click', () => {
         config.highlightOnly = !config.highlightOnly;
         hlSw.classList.toggle('active', config.highlightOnly);
+        if (!config.highlightOnly) clearHighlights();
     });
 
     delayInput.addEventListener('change', (e) => {
@@ -319,39 +318,72 @@ javascript:(function () {
         config.baseDelay = isNaN(val) || val < 0 ? 0 : val;
     });
 
-    const minimizeUI = () => {
-        ui.style.display = 'none';
-        fab.style.display = 'flex';
-    };
-
-    const restoreUI = () => {
-        ui.style.display = 'block';
-        fab.style.display = 'none';
-    };
+    const minimizeUI = () => { ui.style.display = 'none'; fab.style.display = 'flex'; };
+    const restoreUI = () => { ui.style.display = 'block'; fab.style.display = 'none'; };
 
     document.getElementById('rf-min-btn').addEventListener('click', minimizeUI);
     fab.addEventListener('click', restoreUI);
 
     document.getElementById('rf-close-btn').addEventListener('click', () => {
         if (config.intervalId) clearInterval(config.intervalId);
+        clearHighlights();
         ui.remove();
         fab.remove();
         style.remove();
-        delete window.__blooket_solver_instance__;
+        delete window.__blooket_solver_v2__;
     });
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Insert' || e.key === '`') {
-            if (ui.style.display === 'none' && fab.style.display === 'none') {
-                restoreUI();
-            } else {
-                ui.style.display = 'none';
-                fab.style.display = 'none';
-            }
+            if (ui.style.display === 'none' && fab.style.display === 'none') restoreUI();
+            else { ui.style.display = 'none'; fab.style.display = 'none'; }
         }
     });
 
-    // --- Core Auto-Solve Engine ---
+    // --- Highlighting Helper ---
+    function applyHighlight(element) {
+        if (!element) return;
+        element.style.outline = '4px solid #10b981';
+        element.style.outlineOffset = '-4px';
+        element.style.boxShadow = '0 0 25px #10b981, inset 0 0 15px rgba(16, 185, 129, 0.4)';
+        element.style.transition = 'all 0.2s ease';
+        element.setAttribute('data-rf-highlighted', 'true');
+    }
+
+    function clearHighlights() {
+        document.querySelectorAll('[data-rf-highlighted="true"]').forEach(el => {
+            el.style.outline = '';
+            el.style.outlineOffset = '';
+            el.style.boxShadow = '';
+            el.removeAttribute('data-rf-highlighted');
+        });
+        const hint = document.getElementById('rf-answer-hint');
+        if (hint) hint.remove();
+    }
+
+    // --- React Fiber Fetcher ---
+    function getBlooketState() {
+        const container = document.querySelector('body > div');
+        if (!container) return null;
+
+        let targetNode = null;
+        const walker = (node) => {
+            if (!node) return null;
+            const keys = Object.keys(node);
+            const reactKey = keys.find(k => k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$'));
+            if (reactKey && node[reactKey]?.child?._owner?.stateNode) {
+                return node[reactKey].child._owner.stateNode;
+            }
+            for (let child of node.children) {
+                const res = walker(child);
+                if (res) return res;
+            }
+            return null;
+        };
+
+        return walker(container);
+    }
+
     const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
     const calculateDelay = () => {
@@ -360,21 +392,16 @@ javascript:(function () {
         return Math.max(0, Math.floor(config.baseDelay + jitter));
     };
 
+    // --- Core Loop ---
     const solve = async () => {
         if (!config.enabled || config.isProcessing) return;
 
         try {
-            const reactRoot = (function getReact(r = document.querySelector("body>div")) {
-                if (!r) return null;
-                return Object.values(r)[1]?.children?.[0]?._owner?.stateNode ? r : getReact(r.querySelector(":scope>div"));
-            })();
+            const stateNode = getBlooketState();
+            if (!stateNode || !stateNode.state) return;
 
-            if (!reactRoot) return;
-
-            const owner = Object.values(reactRoot)[1]?.children?.[0]?._owner;
-            if (!owner || !owner.stateNode) return;
-
-            const { stateNode: { state: { question, stage, feedback }, props: { client: { question: pquestion } = {} } = {} } } = owner;
+            const { question, stage, feedback } = stateNode.state;
+            const pquestion = stateNode.props?.client?.question;
             const currentQ = question || pquestion;
 
             if (!currentQ) return;
@@ -384,6 +411,7 @@ javascript:(function () {
             const delay = calculateDelay();
             if (delay > 0) await sleep(delay);
 
+            // 1. Multiple Choice / True-False
             if (currentQ.qType !== "typing") {
                 if (stage !== "feedback" && !feedback) {
                     const correctAnswers = currentQ.correctAnswers || [];
@@ -393,34 +421,51 @@ javascript:(function () {
 
                     if (correctIdx !== -1 && answersDom[correctIdx]) {
                         if (config.highlightOnly) {
-                            answersDom.forEach(el => el.classList.remove('rf-correct-answer'));
-                            answersDom[correctIdx].classList.add('rf-correct-answer');
+                            clearHighlights();
+                            applyHighlight(answersDom[correctIdx]);
                         } else {
+                            clearHighlights();
                             answersDom[correctIdx].click();
                         }
                     }
                 } else {
+                    clearHighlights();
                     const feedbackBtn = document.querySelector('[class*="feedback"]');
                     if (feedbackBtn && feedbackBtn.firstChild) {
                         feedbackBtn.firstChild.click();
                     }
                 }
-            } else {
+            } 
+            // 2. Typing Question
+            else {
                 const correctAnswer = currentQ.answers[0];
                 const typingWrapper = document.querySelector("[class*='typingAnswerWrapper']");
-                
+
                 if (typingWrapper) {
-                    const inputOwner = Object.values(typingWrapper)[1]?.children?._owner;
-                    if (inputOwner && inputOwner.stateNode) {
-                        if (!config.highlightOnly) {
-                            inputOwner.stateNode.sendAnswer(correctAnswer);
+                    if (config.highlightOnly) {
+                        if (!document.getElementById('rf-answer-hint')) {
+                            const hintDiv = document.createElement('div');
+                            hintDiv.id = 'rf-answer-hint';
+                            hintDiv.innerText = `💡 정답: ${correctAnswer}`;
+                            typingWrapper.appendChild(hintDiv);
+                        }
+                    } else {
+                        clearHighlights();
+                        const reactKey = Object.keys(typingWrapper).find(k => k.startsWith('__reactFiber$') || k.startsWith('__reactProps$'));
+                        if (reactKey) {
+                            const owner = typingWrapper[reactKey]?.children?._owner || typingWrapper[reactKey]?.child?._owner;
+                            if (owner && owner.stateNode) {
+                                owner.stateNode.sendAnswer(correctAnswer);
+                            }
                         }
                     }
                 }
             }
 
+            // Next Question Click
             const nextContainer = document.querySelector('[class*="questionContainer"]');
             if (nextContainer && !config.highlightOnly) {
+                clearHighlights();
                 nextContainer.click();
             }
 
