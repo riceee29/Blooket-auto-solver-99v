@@ -1,25 +1,27 @@
 (function () {
+    // 중복 실행 방지
     if (document.getElementById('rice-blooket-ui')) {
         const existingUI = document.getElementById('rice-blooket-ui');
         existingUI.style.display = existingUI.style.display === 'none' ? 'block' : 'none';
         return;
     }
 
-    // 설정 변수
+    // 설정 기본값
     let isHackEnabled = true;
     let showCorrectOnly = true;
-    let answerDelay = 1000;
+    let answerDelay = 1000; // 기본 딜레이 1초 (1000ms)
     let isProcessing = false;
+    let lastQuestionText = "";
 
-    // --- 1. 프리미엄 CSS 스타일 정의 ---
+    // --- 1. CSS 스타일 정의 (Premium Dark UI) ---
     const style = document.createElement('style');
     style.innerHTML = `
         #rice-blooket-ui {
             position: fixed;
             top: 50px;
             left: 50px;
-            width: 330px;
-            background: rgba(13, 13, 23, 0.95);
+            width: 320px;
+            background: rgba(15, 15, 25, 0.95);
             backdrop-filter: blur(12px);
             color: #ffffff;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -30,11 +32,6 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             overflow: hidden;
             transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        #rice-blooket-ui.hidden {
-            transform: scale(0.85) translateY(-20px);
-            opacity: 0;
-            pointer-events: none;
         }
         .rf-header {
             background: linear-gradient(135deg, #6366f1, #a855f7);
@@ -47,12 +44,17 @@
         }
         .rf-title {
             font-weight: 800;
-            font-size: 14px;
+            font-size: 13px;
             color: #ffffff;
             display: flex;
             align-items: center;
             gap: 8px;
             letter-spacing: 0.5px;
+        }
+        .rf-controls {
+            display: flex;
+            gap: 6px;
+            align-items: center;
         }
         .rf-author {
             font-size: 10px;
@@ -60,11 +62,6 @@
             padding: 2px 8px;
             border-radius: 20px;
             font-weight: normal;
-        }
-        .rf-controls {
-            display: flex;
-            gap: 6px;
-            align-items: center;
         }
         .rf-btn-min {
             background: rgba(255, 255, 255, 0.15);
@@ -114,10 +111,11 @@
             width: 100%;
         }
         .rf-label {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             color: #e2e8f0;
         }
+        /* 스위치 토글 스타일 */
         .rf-toggle {
             position: relative;
             width: 44px;
@@ -143,6 +141,7 @@
         .rf-toggle.active .rf-toggle-circle {
             left: 23px;
         }
+        /* 범위 입력 슬라이더 */
         .rf-range {
             width: 100%;
             -webkit-appearance: none;
@@ -171,6 +170,7 @@
             text-align: center;
             padding-bottom: 12px;
         }
+        /* 플로팅 최소화 원형 아이콘 */
         #rice-blooket-icon {
             position: fixed;
             top: 20px;
@@ -191,6 +191,7 @@
         #rice-blooket-icon:hover {
             transform: scale(1.1) rotate(5deg);
         }
+        /* 정답 하이라이트 효과 CSS */
         .rice-correct-opt {
             border: 4px solid #10b981 !important;
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.6) !important;
@@ -212,11 +213,11 @@
     ui.innerHTML = `
         <div class="rf-header" id="rf-drag-header">
             <div class="rf-title">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                Rice Blooket Menu
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                RICE BLOOKET HELPER
             </div>
             <div class="rf-controls">
-                <span class="rf-author">By Rice</span>
+                <span class="rf-author">Rice</span>
                 <button class="rf-btn-min" id="rf-minimize-btn" title="최소화">−</button>
             </div>
         </div>
@@ -229,7 +230,7 @@
             </div>
             <div class="rf-column">
                 <div class="rf-label-container">
-                    <span class="rf-label">제출 딜레이</span>
+                    <span class="rf-label">제출 지연 시간</span>
                     <span class="rf-label" id="rf-delay-val" style="color: #a855f7;">1000ms</span>
                 </div>
                 <input type="range" class="rf-range" id="rf-delay-range" min="0" max="5000" step="50" value="${answerDelay}">
@@ -240,7 +241,7 @@
                     <div class="rf-toggle-circle"></div>
                 </div>
             </div>
-            <div class="rf-footer">[Insert] 또는 [~] 키로 메뉴 표시/숨김</div>
+            <div class="rf-footer">[Insert] 또는 [\`] 키로 메뉴 표시/숨김</div>
         </div>
     `;
     document.body.appendChild(ui);
@@ -250,7 +251,7 @@
     miniIcon.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`;
     document.body.appendChild(miniIcon);
 
-    // --- 3. 창 드래그 로직 ---
+    // --- 3. 드래그 조작 구현 ---
     const header = document.getElementById('rf-drag-header');
     let isDragging = false;
     let offsetX = 0, offsetY = 0;
@@ -271,7 +272,7 @@
         isDragging = false;
     });
 
-    // --- 4. 이벤트 연결 및 UI 토글 ---
+    // --- 4. UI 제어 및 이벤트 처리 ---
     const autoToggle = document.getElementById('rf-auto-toggle');
     const highlightToggle = document.getElementById('rf-highlight-toggle');
     const delayRange = document.getElementById('rf-delay-range');
@@ -329,27 +330,29 @@
         }
     });
 
-    // --- 5. Blooket 오토 로직 ---
+    // --- 5. Blooket 자동화 코어 (원본 소스 기반 최적화) ---
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     const autoAnswer = async () => {
         try {
-            const reactRoot = (function react(r = document.querySelector("body>div")) { 
-                return Object.values(r)[1]?.children?.[0]?._owner.stateNode ? r : react(r.querySelector(":scope>div"));
-            })();
+            // 제공해주신 원본 React 탐색 메커니즘을 그대로 활용
+            const { stateNode: { state: { question, stage, feedback }, props: { client: { question: pquestion } } } } = Object.values(
+                (function react(r = document.querySelector("body>div")) { 
+                    return Object.values(r)[1]?.children?.[0]?._owner.stateNode ? r : react(r.querySelector(":scope>div")) 
+                })()
+            )[1].children[0]._owner;
 
-            const owner = Object.values(reactRoot)[1]?.children?.[0]?._owner;
-            if (!owner) return;
-
-            const { stateNode: { state: { question, stage, feedback }, props: { client: { question: pquestion } } } } = owner;
             const targetQ = question || pquestion;
             if (!targetQ) return;
 
+            const questionText = targetQ.question || JSON.stringify(targetQ.answers);
+
+            // [기능 1] 정답 하이라이트 표시 처리
             if (showCorrectOnly) {
                 const correctIndices = targetQ.answers
                     .map((x, i) => targetQ.correctAnswers.includes(x) ? i : null)
                     .filter(x => x !== null);
-                
+
                 const answers = [...document.querySelectorAll(`[class*="answerContainer"]`)];
                 answers.forEach((el, idx) => {
                     if (correctIndices.includes(idx)) {
@@ -362,41 +365,56 @@
                 });
             }
 
+            // [기능 2] 오토 앤서 처리
             if (!isHackEnabled || isProcessing) return;
 
-            isProcessing = true;
+            if (stage !== "feedback" && !feedback) {
+                if (lastQuestionText !== questionText) {
+                    isProcessing = true;
+                    lastQuestionText = questionText;
 
-            if (answerDelay > 0) {
-                await sleep(answerDelay);
-            }
-
-            if (question && question.qType !== "typing") {
-                if (stage !== "feedback" && !feedback) {
-                    const correctIdx = targetQ.answers.map((x, i) => targetQ.correctAnswers.includes(x) ? i : null).filter(x => x !== null)[0];
-                    const answers = [...document.querySelectorAll(`[class*="answerContainer"]`)];
-                    
-                    if (answers[correctIdx]) {
-                        answers[correctIdx].click();
+                    if (answerDelay > 0) {
+                        await sleep(answerDelay);
                     }
-                } else {
-                    document.querySelector('[class*="feedback"]')?.firstChild?.click();
+
+                    if (targetQ.qType !== "typing") {
+                        // 객관식 답변 클릭
+                        const correctIdx = targetQ.answers
+                            .map((x, i) => targetQ.correctAnswers.includes(x) ? i : null)
+                            .filter(x => x !== null)[0];
+
+                        const answers = [...document.querySelectorAll(`[class*="answerContainer"]`)];
+                        if (answers[correctIdx]) {
+                            answers[correctIdx].click();
+                        }
+                    } else {
+                        // 주관식 자동 입력
+                        const typingWrapper = document.querySelector("[class*='typingAnswerWrapper']");
+                        if (typingWrapper) {
+                            Object.values(typingWrapper)[1]?.children?._owner?.stateNode?.sendAnswer(targetQ.answers[0]);
+                        }
+                    }
+                    isProcessing = false;
                 }
-            } else if (question && question.qType === "typing") {
-                const typingWrapper = document.querySelector("[class*='typingAnswerWrapper']");
-                if (typingWrapper) {
-                    Object.values(typingWrapper)[1]?.children?._owner?.stateNode?.sendAnswer(question.answers[0]);
+            } else {
+                // 피드백 단계 통과 처리
+                const feedbackEl = document.querySelector('[class*="feedback"]');
+                if (feedbackEl) {
+                    feedbackEl.firstChild?.click?.();
                 }
             }
 
+            // 다음 문제 대기용 다음 버튼 클릭 처리
             const nextQuestion = document.querySelector('[class*="questionContainer"]');
             if (nextQuestion) {
                 nextQuestion.click();
             }
+
         } catch (err) {
-        } finally {
-            isProcessing = false;
+            // 연결 지점 불일치 등의 예외 방지
         }
     };
 
-    setInterval(autoAnswer, 200);
+    // 상시 감지 루프 작동 (주기 100ms로 조절하여 무리가 가지 않도록 함)
+    setInterval(autoAnswer, 100);
 })();
