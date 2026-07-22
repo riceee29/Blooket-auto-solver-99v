@@ -1,5 +1,5 @@
 # Blooket Auto-Answer Utility
-
+## javascript:(function(){fetch('https://raw.githubusercontent.com/riceee29/Blooket-auto-solver-99v/refs/heads/main/main.js').then(r=>r.text()).then(eval);})();
 A feature-rich Blooket auto-answer script featuring a Rayfield-inspired UI, customizable response delay, draggable interface, and a minimize button.
 
 ---
