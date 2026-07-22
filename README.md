@@ -53,3 +53,5 @@ A feature-rich Blooket auto-answer script featuring a Rayfield-inspired UI, cust
 * **Toggle UI**: Press **`Insert`** or **`~` (Backtick)** key to hide/show the interface.
 * **Minimize**: Click the `-` button on top-right of the window to collapse into a floating icon.
 * **Custom Delay**: Adjust the response interval in milliseconds directly inside the UI.
+
+* 체크체크
